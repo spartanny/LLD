@@ -6,13 +6,16 @@ class Person
     int id;
     string name;
     int score;
-
+    int rounds;
+    int bonus;  // Used to represent either spare(1) or strike(2)
 public:
     Person(int id)
     {
         this->id = id;
         this->name = "Person" + to_string(id);
         this->score = 0;
+        this->rounds = 0;
+        this->bonus = 0;
     }
     string getName()
     {
@@ -22,20 +25,33 @@ public:
     {
         return score;
     }
+    void setRounds(int rounds){
+        this->rounds = rounds;
+    }
+    int getRounds(){
+        return rounds;
+    }
+    int getBonus(){
+        return bonus;
+    }
     pair<int, int> playChance()
-    {
+    {   
         int c1, c2;
         cin >> c1;
-        if (c1 < 10)
-        {
+        if (c1 < 10){
             cin >> c2;
-        }
-        else
-        {
+        }else{
             c2 = 0;
         }
-        cout << id << " " << c1 << ":" << c2 << endl;
-        score += c1 + c2;
+        cout << "Player"<< id << " " << c1 << ":" << c2 << ":" << bonus<< endl;
+        if(bonus == 1)  score += c1*2 + c2;
+        else if(bonus == 2)  score += (c1+c2)*2;
+        else score += c1+c2;
+
+        if(c1 == 10)    bonus = 2;
+        else if(c1 + c2 == 10)   bonus = 1;
+        else bonus = 0;
+        
         return {c1, c2};
     };
 };
@@ -65,37 +81,39 @@ class Lane
     int id;
     vector<Person> players;
     Scoreboard scoreboard;
-
-public:
     int rounds;
-    Lane(int id)
-    {
+public:
+    Lane(int id){
         this->id = id;
     }
-    void setRounds(int rounds)
-    {
-        this->rounds = rounds;
-    }
-    int getId()
-    {
+    int getId(){
         return id;
     }
-    void addPlayers(int n)
-    {
+    void addPlayers(int n){
         for (int i = 0; i < n; i++)
             players.push_back(Person(i));
     }
-    int getPlayers()
-    {
+    int getPlayers(){
         return players.size();
     }
-    void showScore()
-    {
+    void setRounds(int rounds){
+        this->rounds = rounds;
+        for(int i=0;i<players.size();i++)
+            players[i].setRounds(rounds);
+    }
+    int getRounds(){
+        return rounds;
+    }
+    void showScore(){
         scoreboard.showScore(players);
     }
-    void playChance(int pId)
-    {
+    void playChance(int pId,bool flag = false){
+        if(flag){
+            int temp;
+            cin>>temp;
+        }
         pair<int, int> score = players[pId].playChance();
+        players[pId].setRounds(players[pId].getRounds()-1);
         string c1, c2;
         if (score.first == 10)
             c1 = "X", c2 = "";
@@ -105,6 +123,11 @@ public:
             c1 = to_string(score.first), c2 = to_string(score.second);
         string chance = "{" + c1 + "," + c2 + "}";
         scoreboard.updateScore(pId, chance);
+        // Allow player to play one more bonus chance if scored spare or strike on the last round
+        if(players[pId].getRounds() == 0 and players[pId].getBonus() > 0){
+            // rounds+=1;
+            this->playChance(pId,true);
+        }
     }
 };
 
@@ -125,20 +148,20 @@ int main()
 {
     Alley alley(5); // Alley of 5 lanes;
     // lets take lane 0 for instance
-    Lane l = alley.lanes[0];
+    Lane lane = alley.lanes[0];
 
     int num_of_players = 2;
     // Add num_of_players into this lane;
-    l.addPlayers(num_of_players);
-    cout << "Lane : " << l.getId() << " , Players : " << l.getPlayers() << endl;
-
+    lane.addPlayers(num_of_players);
+    cout << "Lane : " << lane.getId() << " , Players : " << lane.getPlayers() << endl;
+    
     // Input number of rounds and update that for the lane
-    printf("Specify number of rounds\n");
+    // printf("Specify number of rounds\n");
     int rounds;
     cin >> rounds;
-    l.setRounds(rounds);
-    // cout<<rounds<<endl;
+    lane.setRounds(rounds);
     rounds *= num_of_players;
+    // cout<<rounds<<endl;
 
     while (true)
     {
@@ -146,13 +169,11 @@ int main()
             break;
         int pId;
         cin >> pId;
-        l.playChance(pId - 1);
-        rounds--;
+        lane.playChance(pId - 1);
+        --rounds;
         // cout<<rounds<<endl;
     }
-    l.showScore();
-
-    cout << endl;
+    lane.showScore();
 }
 
 /*

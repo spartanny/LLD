@@ -123,5 +123,3 @@ Candidate Guidelines
 ● You are free to use the language of your choice 
 ● All work should be your own 
 ● Please focus on the Bonus Feature only after ensuring the required features are complete and demoable. 
-
-
